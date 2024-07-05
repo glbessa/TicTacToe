@@ -28,7 +28,7 @@
         </div>
 
         <script>
-            var ws = new WebSocket(`ws://server.glbessa.dev.br:8000/ws`);
+            var ws = new WebSocket(`wss://server.glbessa.dev.br:8000/ws`);
             var nickname = document.cookie.split("; ").find(row => row.startsWith("nickname=")).split("=")[1];
             if (!nickname) {
                 nickname = Math.random().toString(36).substring(7);
