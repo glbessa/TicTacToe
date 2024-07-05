@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/assets/game.css">
+        <title>TicTacToe</title>
+    </head>
+    <body>
+        <h1>TicTacToe</h1>
+        <!-- Show game status -->
+        <div id="status">
+            <p><span id="statusMessage">Waiting for opponent player</span></p>
+            <p><span id="player1"></span></p>
+            <p><span id="player2">Waiting...</span></p>
+        </div>
+
+        <div id="board">
+            <div id="cell-0" class="cell" onclick="makeMove(0)"></div>
+            <div id="cell-1" class="cell" onclick="makeMove(1)"></div>
+            <div id="cell-2" class="cell" onclick="makeMove(2)"></div>
+            <div id="cell-3" class="cell" onclick="makeMove(3)"></div>
+            <div id="cell-4" class="cell" onclick="makeMove(4)"></div>
+            <div id="cell-5" class="cell" onclick="makeMove(5)"></div>
+            <div id="cell-6" class="cell" onclick="makeMove(6)"></div>
+            <div id="cell-7" class="cell" onclick="makeMove(7)"></div>
+            <div id="cell-8" class="cell" onclick="makeMove(8)"></div>
+        </div>
+
+        <script>
+            var ws = new WebSocket(`ws://server.glbessa.dev.br:8000/ws`);
+            var nickname = document.cookie.split("; ").find(row => row.startsWith("nickname=")).split("=")[1];
+            if (!nickname) {
+                nickname = Math.random().toString(36).substring(7);
+                document.cookie = `nickname=${nickname}`;
+            }
+            var symbol = null;
+            var opponentNickname = null;
+            var opponentSymbol = null;
+            var gameStatus = "waiting";
+            var isMyTurn = false;
+
+            ws.onopen = function (event) {
+                console.log("Connection opened")
+                ws.send(JSON.stringify({type: "join", nickname: nickname}));
+            }
+            ws.onmessage = function (event) {
+                var data = JSON.parse(event.data)
+                console.log(data)
+                
+                switch (data.type) {
+                    case "error":
+                        handleError(data);
+                        break;
+                    case "start":
+                        handleStart(data);
+                        break;
+                    case "turn":
+                        handleTurn(data);
+                        break;
+                    case "move":
+                        handleMove(data);
+                        break;
+                    case "gameover":
+                        handleGameOver(data);
+                        break;
+                }
+                
+            };
+            ws.onclose = function (event) {
+                console.log("Connection closed")
+            }
+
+            function handleError(data) {
+                alert(data.message);
+            }
+
+            function handleStart(data) {
+                symbol = data.symbol;        
+                opponentNickname = data.opponent_nickname;
+                document.getElementById("player1").innerText = `${nickname} (${symbol})`;
+                opponentSymbol = symbol === "X" ? "O" : "X";
+                document.getElementById("player2").innerText = `${opponentNickname} (${opponentSymbol})`;
+            }
+
+            function handleTurn(data) {
+                isMyTurn = data.value;
+                document.getElementById("statusMessage").innerText = isMyTurn ? "Your turn" : "Opponent's turn";
+            }
+
+            function handleMove(data) {
+                updateBoard(data.cell, data.symbol);
+                isMyTurn = data.symbol !== symbol;
+            }
+
+            function handleGameOver(data) {
+                console.log(data)
+                switch(data.result) {
+                    case symbol:
+                        document.getElementById("statusMessage").innerText = "You win!";
+                        break;
+                    case opponentSymbol:
+                        document.getElementById("statusMessage").innerText = "You lose!";
+                        break;
+                    case "draw":
+                        document.getElementById("statusMessage").innerText = "It's a draw!";
+                        break;
+                }
+
+                isMyTurn = false;
+            }
+
+            function updateBoard(cellId, moveSymbol) {
+                var cell = document.getElementById(`cell-${cellId}`);
+                cell.innerText = moveSymbol;
+            }
+
+            function makeMove(cellId) {
+                if (!isMyTurn) {
+                    alert("It's not your turn");
+                    return;
+                }
+                ws.send(JSON.stringify({type: "move", cell: cellId}));
+            }
+        </script>
+    </body>
+</html>

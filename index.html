@@ -1,13 +1,35 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <h1>Tic Tac Toe!</h1>
+        <label for="nicknameTxt">Nickname:</label>
+        <input type="text" onchange="setNickname()" id="nicknameTxt">
+        <div id="newGameSelection">
+            <a href="/game/single">Single player</a>
+            <a href="/game/local">Local players</a>
+            <a href="/game/online">Online</a>
+        </div>
+        <script>
+            // Load nickname from cookie
+            function loadNickname() {
+                var nickname = document.cookie
+                .split("; ")
+                .find(row => row.startsWith("nickname="))
+                .split("=")[1];
+
+                document.getElementById("nicknameTxt").value = nickname;
+            }
+
+            // Save nickname to cookie
+            function setNickname() {
+                var nickname = document.getElementById("nicknameTxt").value;
+                document.cookie = `nickname=${nickname}`;
+            }
+
+            document.onload = loadNickname();
+        </script>
+    </body>
 </html>
