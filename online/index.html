@@ -3,16 +3,16 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="./../../assets/game.css">
-        <title>TicTacToe</title>
+        <link rel="stylesheet" href="./../assets/game.css">
+        <title>Tic Tac Toe!</title>
     </head>
     <body>
-        <h1>TicTacToe</h1>
+        <h1>Tic Tac Toe!</h1>
         <!-- Show game status -->
         <div id="status">
-            <p><span id="statusMessage">Waiting for opponent player</span></p>
-            <p><span id="player1"></span></p>
-            <p><span id="player2">Waiting...</span></p>
+            <p>Status: <span id="statusMessage">Waiting for opponent player</span></p>
+            <p>You (<span id="nickname"></span>): <span id="player1"></span></p>
+            <p>Opponent (<span id="opponentNickname"></span>): <span id="player2">Waiting...</span></p>
         </div>
 
         <div id="board">
@@ -27,26 +27,33 @@
             <div id="cell-8" class="cell" onclick="makeMove(8)"></div>
         </div>
 
+        <script src="../assets/jquery-3.7.1.min.js"></script>
         <script>
-            var ws = new WebSocket(`wss://server.glbessa.dev.br:8000/ws`);
-            var nickname = document.cookie.split("; ").find(row => row.startsWith("nickname=")).split("=")[1];
+            let ws;
+            try {
+                ws = new WebSocket(`ws://api.tictactoe.glbessa.dev.br:51625/ws`);
+            } catch (error) {
+                showError("Failed to connect to server");
+            }
+            let nickname = localStorage.getItem("nickname");
             if (!nickname) {
                 nickname = Math.random().toString(36).substring(7);
-                document.cookie = `nickname=${nickname}`;
+                localStorage.setItem("nickname", nickname);
             }
-            var symbol = null;
-            var opponentNickname = null;
-            var opponentSymbol = null;
-            var gameStatus = "waiting";
-            var isMyTurn = false;
+            $("#nickname").text(nickname);
+            let symbol = null;
+            let opponentNickname = null;
+            let opponentSymbol = null;
+            let gameStatus = "waiting";
+            let isMyTurn = false;
 
             ws.onopen = function (event) {
                 console.log("Connection opened")
                 ws.send(JSON.stringify({type: "join", nickname: nickname}));
             }
             ws.onmessage = function (event) {
-                var data = JSON.parse(event.data)
-                console.log(data)
+                let data = JSON.parse(event.data)
+                //#console.log(data)
                 
                 switch (data.type) {
                     case "error":
@@ -65,27 +72,36 @@
                         handleGameOver(data);
                         break;
                 }
-                
             };
             ws.onclose = function (event) {
+                showError("Connection closed");
                 console.log("Connection closed")
+            }
+            ws.onerror = function (event) {
+                showError("Connection error");
+                console.log("Connection error")
+            }
+
+            function showError(message) {
+                $("#statusMessage").text(message);
             }
 
             function handleError(data) {
-                alert(data.message);
+                showError(data.message);
             }
 
             function handleStart(data) {
                 symbol = data.symbol;        
                 opponentNickname = data.opponent_nickname;
-                document.getElementById("player1").innerText = `${nickname} (${symbol})`;
+                $("#player1").text(symbol)
                 opponentSymbol = symbol === "X" ? "O" : "X";
-                document.getElementById("player2").innerText = `${opponentNickname} (${opponentSymbol})`;
+                $("#opponentNickname").text(opponentNickname);
+                $("#player2").text(opponentSymbol);
             }
 
             function handleTurn(data) {
                 isMyTurn = data.value;
-                document.getElementById("statusMessage").innerText = isMyTurn ? "Your turn" : "Opponent's turn";
+                $("#statusMessage").text(isMyTurn ? "Your turn" : "Opponent's turn")
             }
 
             function handleMove(data) {
@@ -97,13 +113,13 @@
                 console.log(data)
                 switch(data.result) {
                     case symbol:
-                        document.getElementById("statusMessage").innerText = "You win!";
+                        $("#statusMessage").text("You win!")
                         break;
                     case opponentSymbol:
-                        document.getElementById("statusMessage").innerText = "You lose!";
+                        $("#statusMessage").text("You lose!")
                         break;
                     case "draw":
-                        document.getElementById("statusMessage").innerText = "It's a draw!";
+                        $("#statusMessage").text("It's a draw!")
                         break;
                 }
 
@@ -111,8 +127,7 @@
             }
 
             function updateBoard(cellId, moveSymbol) {
-                var cell = document.getElementById(`cell-${cellId}`);
-                cell.innerText = moveSymbol;
+                $(`#cell-${cellId}`).text(moveSymbol);
             }
 
             function makeMove(cellId) {

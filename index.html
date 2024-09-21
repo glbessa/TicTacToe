@@ -2,34 +2,33 @@
 <html>
     <head>
         <title>Chat</title>
+        <link rel="stylesheet" href="assets/index.css">
+        <link rel="stylesheet" href="assets/global.css">
     </head>
     <body>
         <h1>Tic Tac Toe!</h1>
-        <label for="nicknameTxt">Nickname:</label>
-        <input type="text" onchange="setNickname()" id="nicknameTxt">
-        <div id="newGameSelection">
-            <a href="./game/single">Single player</a>
-            <a href="./game/local">Local players</a>
-            <a href="./game/online">Online</a>
+        <div>
+            <label for="nicknameTxt">Nickname:</label>
+            <input type="text" onchange="setNickname()" id="nicknameTxt">
         </div>
+        <div id="newGameSelection">
+            <a href="./single">Single player</a>
+            <a href="./local">Local players</a>
+            <a href="./online">Online</a>
+        </div>
+        <script src="assets/jquery-3.7.1.min.js"></script>
         <script>
             // Load nickname from cookie
             function loadNickname() {
-                var nickname = document.cookie
-                .split("; ")
-                .find(row => row.startsWith("nickname="))
-                .split("=")[1];
-
-                document.getElementById("nicknameTxt").value = nickname;
+                $("#nicknameTxt").val(localStorage.getItem("nickname"));
             }
 
             // Save nickname to cookie
             function setNickname() {
-                var nickname = document.getElementById("nicknameTxt").value;
-                document.cookie = `nickname=${nickname}`;
+                localStorage.setItem("nickname", $("#nicknameTxt").val());
             }
 
-            document.onload = loadNickname();
+            loadNickname();
         </script>
     </body>
 </html>
